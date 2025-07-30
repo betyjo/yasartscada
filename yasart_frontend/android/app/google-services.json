@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "160196194485",
+    "project_id": "yasartscada",
+    "storage_bucket": "yasartscada.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:160196194485:android:5d8540faf81c16aa83cefc",
+        "android_client_info": {
+          "package_name": "com.example.yasart_frontend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAIjiHVLfheTTuUrzTbjP1dzGuwjCkeE8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
