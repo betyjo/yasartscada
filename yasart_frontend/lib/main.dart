@@ -1,8 +1,10 @@
+// ignore_for_file: no_wildcard_variable_uses
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
-// Import your screens here - make sure these files exist and define the classes below
+// Screens
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
@@ -12,6 +14,12 @@ import 'screens/bill_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/status_screen.dart';
 import 'screens/about_screen.dart';
+import 'screens/user_screen.dart';
+import 'screens/base_screen.dart';
+
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,10 +30,20 @@ void main() async {
 class YasartSCADAApp extends StatelessWidget {
   const YasartSCADAApp({super.key});
 
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'YASART SCADA',
+      debugShowCheckedModeBanner: false,
+      theme: appTheme,
+      home: const RoleLoaderScreen(),
+    );
+  }
+
   static final ThemeData appTheme = ThemeData(
     brightness: Brightness.dark,
-    primaryColor: const Color.fromARGB(255, 100, 102, 105),
     scaffoldBackgroundColor: Colors.black,
+    primaryColor: const Color.fromARGB(255, 100, 102, 105),
     appBarTheme: const AppBarTheme(
       backgroundColor: Color(0xFF121212),
       foregroundColor: Colors.lightBlueAccent,
@@ -62,165 +80,147 @@ class YasartSCADAApp extends StatelessWidget {
     ),
     iconTheme: const IconThemeData(color: Colors.lightBlueAccent),
   );
+}
+
+class RoleLoaderScreen extends StatefulWidget {
+  const RoleLoaderScreen({super.key});
+
+  @override
+  State<RoleLoaderScreen> createState() => _RoleLoaderScreenState();
+}
+
+class _RoleLoaderScreenState extends State<RoleLoaderScreen> {
+  String? role;
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchRole();
+  }
+
+  Future<void> fetchRole() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final username = prefs.getString('username');
+
+      if (username != null) {
+        final res = await http.get(
+            Uri.parse('http://127.0.0.1:8000/user-role?username=$username'));
+
+        if (res.statusCode == 200) {
+          final data = jsonDecode(res.body);
+          setState(() {
+            role = data['role'] ?? 'viewer';
+            loading = false;
+          });
+        } else {
+          setState(() {
+            role = 'viewer';
+            loading = false;
+          });
+        }
+      } else {
+        setState(() {
+          role = 'viewer';
+          loading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        role = 'viewer';
+        loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return MainRouter(role: role!); // Safe, since role is resolved
+  }
+}
+
+class MainRouter extends StatelessWidget {
+  final String role;
+
+  const MainRouter({super.key, required this.role});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'YASART SCADA',
       debugShowCheckedModeBanner: false,
-      theme: appTheme,
+      theme: YasartSCADAApp.appTheme,
       initialRoute: '/',
-      routes: {
-        '/': (context) => const SplashScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/home': (context) => const HomeScreen(),
-        '/connect': (context) => const ConnectScreen(),
-        '/add_user': (context) =>
-            const AddUserScreen(), // from add_user_screen.dart
-        '/billing': (context) =>
-            const BillingScreen(), // from billing_screen.dart (ensure class name matches)
-        '/dashboard': (context) =>
-            DashboardScreen(username: '', role: '', pressureTransducerId: ''),
-        '/status': (context) => StatusScreen(
-          pump1Level: 0,
-          pump2Level: 0,
-          pump3Level: 0,
-          pressureReading: 0.0,
-          pump1On: false,
-          pump2On: false,
-          pump3On: false,
-          valveStates: const {},
-          onLogout: () {
-            Navigator.of(context).pushReplacementNamed('/login');
-          },
-          onNavigate: (route) {
-            Navigator.of(context).pushReplacementNamed(route);
-          },
-        ),
-        '/about': (context) => const AboutScreen(),
+      onGenerateRoute: (settings) {
+        switch (settings.name) {
+          case '/':
+            return _wrap(const SplashScreen(), 'Splash');
+          case '/login':
+            return _wrap(const LoginScreen(), 'Login');
+          case '/home':
+            return _wrap(const HomeScreen(), 'Home');
+          case '/connect':
+            return _wrap(const ConnectScreen(), 'Connect');
+          case '/dashboard':
+            return _wrap(
+              DashboardScreen(
+                  username: '', role: role, pressureTransducerId: ''),
+              'Dashboard',
+            );
+          case '/status':
+            return MaterialPageRoute(
+              builder: (_) => StatusScreen(
+                onLogout: () => Navigator.of(_)
+                    .pushNamedAndRemoveUntil('/login', (r) => false),
+                onNavigate: (route) =>
+                    Navigator.of(_).pushReplacementNamed(route),
+              ),
+            );
+          case '/about':
+            return _wrap(const AboutScreen(), 'About');
+          case '/billing':
+            return _wrap(const BillingScreen(),
+                role == 'admin' ? 'Billing' : 'My Billing');
+          case '/add_user':
+            return role == 'admin'
+                ? _wrap(const AddUserScreen(), 'Add User')
+                : _unauthorized();
+          case '/user':
+            return role == 'admin'
+                ? _wrap(const AdminUserListScreen(), 'User List')
+                : _unauthorized();
+          default:
+            return _notFound();
+        }
       },
     );
   }
-}
 
-///
-/// BaseScreen class to use for all main pages with drawer and consistent UI.
-/// Each screen can wrap its content in this BaseScreen to get the drawer and appbar.
-///
-class BaseScreen extends StatelessWidget {
-  final String title;
-  final Widget body;
-
-  const BaseScreen({super.key, required this.title, required this.body});
-
-  void _handleLogout(BuildContext context) {
-    // TODO: Implement your real logout logic here (e.g., FirebaseAuth.instance.signOut())
-    Navigator.of(context).pushReplacementNamed('/login');
-  }
-
-  void _navigate(BuildContext context, String route) {
-    final currentRoute = ModalRoute.of(context)?.settings.name;
-    if (currentRoute != route) {
-      Navigator.of(context).pushReplacementNamed(route);
-    }
-    Navigator.of(context).pop(); // close drawer
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-            tooltip: 'Open navigation menu',
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
-            onPressed: () => _handleLogout(context),
-          ),
-        ],
-      ),
-      drawer: Drawer(
-        backgroundColor: const Color(0xFF121212),
-        child: Column(
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.blueAccent),
-              child: Center(
-                child: Text(
-                  'YASART SCADA',
-                  style: TextStyle(color: Colors.white, fontSize: 24),
-                ),
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  _buildDrawerItem(context, Icons.home, 'Home', '/home'),
-                  _buildDrawerItem(context, Icons.usb, 'Connect', '/connect'),
-                  _buildDrawerItem(
-                    context,
-                    Icons.dashboard,
-                    'Dashboard',
-                    '/dashboard',
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    Icons.person_add,
-                    'Add User',
-                    '/add_user',
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    Icons.payment,
-                    'Billing',
-                    '/billing',
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    Icons.monitor_heart,
-                    'Status',
-                    '/status',
-                  ),
-                  _buildDrawerItem(context, Icons.info, 'About', '/about'),
-                ],
-              ),
-            ),
-            Align(
-              alignment: Alignment.bottomLeft,
-              child: ListTile(
-                leading: const Icon(Icons.logout, color: Colors.redAccent),
-                title: const Text(
-                  'Logout',
-                  style: TextStyle(color: Colors.redAccent),
-                ),
-                onTap: () => _handleLogout(context),
-              ),
-            ),
-          ],
-        ),
-      ),
-      body: body,
+  MaterialPageRoute _wrap(Widget body, String title) {
+    return MaterialPageRoute(
+      builder: (_) => BaseScreen(title: title, body: body, role: role),
     );
   }
 
-  ListTile _buildDrawerItem(
-    BuildContext context,
-    IconData icon,
-    String title,
-    String routeName,
-  ) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.lightBlueAccent),
-      title: Text(title, style: const TextStyle(color: Colors.white)),
-      onTap: () => _navigate(context, routeName),
+  MaterialPageRoute _unauthorized() {
+    return MaterialPageRoute(
+      builder: (_) => const Scaffold(
+        body: Center(child: Text('You are not authorized to view this page')),
+      ),
+    );
+  }
+
+  MaterialPageRoute _notFound() {
+    return MaterialPageRoute(
+      builder: (_) => const Scaffold(
+        body: Center(child: Text('404 - Page not found')),
+      ),
     );
   }
 }

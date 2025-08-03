@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'welcome_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -36,7 +35,9 @@ class _LoginScreenState extends State<LoginScreen> {
     if (savedUsername != null && savedPassword != null) {
       _usernameController.text = savedUsername;
       _passwordController.text = savedPassword;
-      _rememberMe = true;
+      setState(() {
+        _rememberMe = true;
+      });
     }
   }
 
@@ -93,15 +94,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    Theme.of(context);
 
     return Scaffold(
+      backgroundColor: Colors.black,
       body: Center(
         child: Container(
           width: 360,
           padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary,
+            color: const Color(0xFF121212),
             borderRadius: BorderRadius.circular(20),
             boxShadow: const [
               BoxShadow(
@@ -117,7 +119,8 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 SizedBox(
                   height: 100,
-                  child: Image.asset('assets/logo.jpg', fit: BoxFit.contain),
+                  child:
+                      Image.asset('assets/YASARTLogo.jpg', fit: BoxFit.contain),
                 ),
                 const SizedBox(height: 24),
                 Text(
@@ -125,14 +128,23 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.secondary,
+                    color: Colors.white,
                     letterSpacing: 1.2,
                   ),
                 ),
                 const SizedBox(height: 32),
                 TextField(
                   controller: _usernameController,
-                  decoration: const InputDecoration(labelText: 'Username'),
+                  decoration: const InputDecoration(
+                    labelText: 'Username',
+                    labelStyle: TextStyle(color: Colors.white70),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white54),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.lightBlueAccent),
+                    ),
+                  ),
                   style: const TextStyle(color: Colors.white),
                 ),
                 const SizedBox(height: 20),
@@ -141,10 +153,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: !_showPassword,
                   decoration: InputDecoration(
                     labelText: 'Password',
+                    labelStyle: const TextStyle(color: Colors.white70),
+                    enabledBorder: const UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white54),
+                    ),
+                    focusedBorder: const UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.lightBlueAccent),
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _showPassword ? Icons.visibility_off : Icons.visibility,
-                        color: theme.colorScheme.secondary,
+                        color: Colors.lightBlueAccent,
                       ),
                       onPressed: () => setState(() {
                         _showPassword = !_showPassword;
@@ -164,7 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         });
                       },
                       checkColor: Colors.black,
-                      activeColor: theme.colorScheme.secondary,
+                      activeColor: Colors.lightBlueAccent,
                     ),
                     const Text(
                       'Remember me',
@@ -185,16 +204,22 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 const SizedBox(height: 24),
                 _loading
-                    ? const CircularProgressIndicator()
+                    ? const CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.lightBlueAccent),
+                      )
                     : ElevatedButton(
                         onPressed: _login,
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 14,
-                            horizontal: 32,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.lightBlueAccent,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 14, horizontal: 32),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text('LOGIN'),
                         ),
+                        child: const Text('LOGIN'),
                       ),
               ],
             ),

@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'base_screen.dart';
 
 class ConnectScreen extends StatefulWidget {
   const ConnectScreen({super.key});
@@ -132,79 +131,75 @@ class _ConnectScreenState extends State<ConnectScreen> {
         break;
     }
 
-    return BaseScreen(
-      title: 'Connect to Modbus',
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.usb, size: 80, color: statusColor),
-              const SizedBox(height: 20),
-              Text(
-                statusText,
-                style: TextStyle(
-                  color: statusColor,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                ),
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.usb, size: 80, color: statusColor),
+            const SizedBox(height: 20),
+            Text(
+              statusText,
+              style: TextStyle(
+                color: statusColor,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
               ),
-              if (_connectionStatus == ConnectionStatus.error &&
-                  _errorMessage.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Text(
-                  _errorMessage,
-                  style: const TextStyle(color: Colors.redAccent, fontSize: 14),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-              const SizedBox(height: 40),
-              ElevatedButton.icon(
-                onPressed: _connectionStatus == ConnectionStatus.connecting
-                    ? null
-                    : _toggleConnection,
-                icon: _connectionStatus == ConnectionStatus.connecting
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.black,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Icon(
-                        _connectionStatus == ConnectionStatus.connected
-                            ? Icons.usb_off
-                            : Icons.usb,
-                        color: Colors.black,
-                      ),
-                label: Text(
-                  _connectionStatus == ConnectionStatus.connected
-                      ? 'Disconnect'
-                      : 'Connect',
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      _connectionStatus == ConnectionStatus.connected
-                      ? Colors.redAccent
-                      : Colors.amberAccent,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 30,
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
+            ),
+            if (_connectionStatus == ConnectionStatus.error &&
+                _errorMessage.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(
+                _errorMessage,
+                style: const TextStyle(color: Colors.redAccent, fontSize: 14),
+                textAlign: TextAlign.center,
               ),
             ],
-          ),
+            const SizedBox(height: 40),
+            ElevatedButton.icon(
+              onPressed: _connectionStatus == ConnectionStatus.connecting
+                  ? null
+                  : _toggleConnection,
+              icon: _connectionStatus == ConnectionStatus.connecting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.black,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Icon(
+                      _connectionStatus == ConnectionStatus.connected
+                          ? Icons.usb_off
+                          : Icons.usb,
+                      color: Colors.black,
+                    ),
+              label: Text(
+                _connectionStatus == ConnectionStatus.connected
+                    ? 'Disconnect'
+                    : 'Connect',
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _connectionStatus == ConnectionStatus.connected
+                    ? Colors.redAccent
+                    : Colors.amberAccent,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
