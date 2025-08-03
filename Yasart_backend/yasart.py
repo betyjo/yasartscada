@@ -1,3 +1,6 @@
+# ----------------------
+# ✅ FASTAPI BACKEND FIX
+# ----------------------
 from fastapi import FastAPI, HTTPException, Path
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -9,7 +12,6 @@ from pymodbus.exceptions import ModbusIOException
 
 app = FastAPI()
 
-# ---------- CORS for Flutter frontend ----------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -18,7 +20,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---------- PostgreSQL Database Connection ----------
 conn = psycopg2.connect(
     dbname="yasart_scada",
     user="postgres",
@@ -27,7 +28,6 @@ conn = psycopg2.connect(
     port="5432"
 )
 
-# ---------- Data Models ----------
 class LoginData(BaseModel):
     username: str
     password: str
@@ -38,10 +38,6 @@ class UserCreate(BaseModel):
     role: str
     pressure_transducer_id: str | None = None
 
-class PumpUpdate(BaseModel):
-    pump_id: int
-    is_on: bool
-
 class ModbusRequest(BaseModel):
     method: str = "rtu"
     com_port: str = "COM4"
@@ -51,7 +47,6 @@ class ModbusRequest(BaseModel):
     value: int | None = None
     write: bool = False
 
-# ---------- User Logic ----------
 def check_user_exists(username: str):
     with conn.cursor() as cur:
         cur.execute("SELECT 1 FROM users WHERE username = %s", (username,))
@@ -65,6 +60,15 @@ def login(data: LoginData):
     if result and data.password == result[0]:
         return {"role": result[1], "username": data.username}
     raise HTTPException(status_code=401, detail="Invalid username or password")
+
+@app.get("/user_role")
+def get_user_role(username: str):
+    with conn.cursor() as cur:
+        cur.execute("SELECT role FROM users WHERE username = %s", (username,))
+        result = cur.fetchone()
+    if result:
+        return {"role": result[0]}
+    raise HTTPException(status_code=404, detail="User not found")
 
 @app.post("/users/create")
 def create_user(user: UserCreate):
@@ -80,6 +84,7 @@ def create_user(user: UserCreate):
         )
     conn.commit()
     return {"status": "User created successfully"}
+
 
 # ---------- Billing Logic ----------
 PRESSURE_TO_FLOW_FACTOR = 10.0

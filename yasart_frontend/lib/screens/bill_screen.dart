@@ -1,5 +1,3 @@
-// File: screens/billing.dart
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -53,46 +51,50 @@ class _BillingScreenState extends State<BillingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 84, 64, 69),
-      appBar: AppBar(title: const Text('Billing')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage.isNotEmpty
-              ? Center(
-                  child: Text(
-                    _errorMessage,
-                    style: const TextStyle(
-                        color: Color.fromARGB(255, 149, 122, 122),
-                        fontSize: 18),
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(20),
-                  itemCount: billingRecords.length,
-                  itemBuilder: (context, index) {
-                    final record = billingRecords[index];
-                    return Card(
-                      color: const Color(0xFF101010),
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
-                      child: ListTile(
-                        title: Text(
-                          record.username,
-                          style: const TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Text(
-                          'Water Used: ${record.waterUsed.toStringAsFixed(2)} m³\n'
-                          'Amount Due: \$${record.amountDue.toStringAsFixed(2)}\n'
-                          'Billing Date: ${record.billingDate}',
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                      ),
-                    );
-                  },
-                ),
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage.isNotEmpty) {
+      return Center(
+        child: Text(
+          _errorMessage,
+          style: const TextStyle(
+            color: Color.fromARGB(255, 149, 122, 122),
+            fontSize: 18,
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(20),
+      itemCount: billingRecords.length,
+      itemBuilder: (context, index) {
+        final record = billingRecords[index];
+        return Card(
+          color: const Color(0xFF101010),
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: ListTile(
+            title: Text(
+              record.username,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            subtitle: Text(
+              'Water Used: ${record.waterUsed.toStringAsFixed(2)} m³\n'
+              'Amount Due: \$${record.amountDue.toStringAsFixed(2)}\n'
+              'Billing Date: ${record.billingDate}',
+              style: const TextStyle(color: Colors.white70),
+            ),
+          ),
+        );
+      },
     );
   }
 }
